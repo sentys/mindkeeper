@@ -133,6 +133,7 @@ const styles = {
   title: {
     fontSize: 20,
     marginBottom: 4,
+    marginTop: 0, 
   },
   row: {
     display: 'grid',

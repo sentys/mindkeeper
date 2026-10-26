@@ -12,6 +12,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'MindKeeper API работает' });
 });
 
+// Запрет на индексирование api
+
+app.use('/api', (req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow');
+  next();
+});
+
 // -------- GET all notes (с тегами и коллекцией) --------
 app.get('/api/notes', async (req, res) => {
   try {

@@ -47,16 +47,19 @@ export default function App() {
 
   return (
     <div style={styles.container}>
+      {/* Используем семантический тег header */}
       <header style={styles.header}>
-        <h1 style={styles.logo}>📚 MindKeeper</h1>
+        <div style={styles.logo}>📚 MindKeeper</div>
         <p style={styles.tagline}>Сохраняй цитаты и идеи. Не теряй их.</p>
       </header>
 
+      {/* Используем семантический тег main */}
       <main style={styles.main}>
         <NoteForm onCreated={loadData} collections={collections} />
 
         <div style={styles.notesSection}>
           <div style={styles.notesHeader}>
+            {/* Заголовок H2 с правильным сбросом отступов */}
             <h2 style={styles.notesTitle}>
               Мои записи <span style={styles.counter}>{notes.length}</span>
             </h2>
@@ -84,6 +87,7 @@ export default function App() {
         </div>
       </main>
 
+      {/* Используем семантический тег footer */}
       <footer style={styles.footer}>
         MindKeeper · {new Date().getFullYear()}
       </footer>
@@ -105,6 +109,7 @@ const styles = {
   logo: {
     fontSize: 24,
     fontWeight: 700,
+    margin: 0, 
   },
   tagline: {
     color: '#86868b',
@@ -134,10 +139,11 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
+    margin: 0, // <--- СБРОС ОТСТУПА (важно для h2)
   },
   counter: {
     fontSize: 13,
-    background: '#0071e3',
+    background: '#06519c',
     color: '#fff',
     padding: '2px 10px',
     borderRadius: 12,

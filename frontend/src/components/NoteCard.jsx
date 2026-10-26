@@ -7,13 +7,14 @@ export default function NoteCard({ note, onDelete }) {
   };
 
   return (
-    <div style={styles.card}>
+    <article style={styles.card}> {/* Заменил div на article для лучшей семантики */}
       <div style={styles.header}>
         <span style={styles.sourceIcon}>
           {sourceLabels[note.source_type] || '💭'}
         </span>
         <div style={styles.sourceInfo}>
-          {note.source_title && <div style={styles.sourceTitle}>{note.source_title}</div>}
+          {/* Заменил div на h3 */}
+          {note.source_title && <h3 style={styles.sourceTitle}>{note.source_title}</h3>}
           {note.source_author && <div style={styles.author}>{note.source_author}</div>}
         </div>
         <button onClick={() => onDelete(note.id)} style={styles.deleteBtn} title="Удалить">
@@ -39,7 +40,7 @@ export default function NoteCard({ note, onDelete }) {
           year: 'numeric',
         })}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -68,6 +69,7 @@ const styles = {
   sourceTitle: {
     fontWeight: 600,
     fontSize: 14,
+    margin: 0, // <--- ОБЯЗАТЕЛЬНО: убираем стандартный отступ h3
   },
   author: {
     fontSize: 12,
