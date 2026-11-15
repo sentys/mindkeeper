@@ -7,7 +7,7 @@ export default function NoteCard({ note, onDelete }) {
   };
 
   return (
-    <article style={styles.card}> {/* Заменил div на article для лучшей семантики */}
+    <article style={styles.card}> {}
       <div style={styles.header}>
         <span style={styles.sourceIcon}>
           {sourceLabels[note.source_type] || '💭'}
