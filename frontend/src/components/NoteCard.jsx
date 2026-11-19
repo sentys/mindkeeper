@@ -69,7 +69,7 @@ const styles = {
   sourceTitle: {
     fontWeight: 600,
     fontSize: 14,
-    margin: 0, // <--- ОБЯЗАТЕЛЬНО: убираем стандартный отступ h3
+    margin: 0, // 
   },
   author: {
     fontSize: 12,
