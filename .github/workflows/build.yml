@@ -31,7 +31,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./backend
-          file: ./backend/Dockerfile
+          file: ./deploy/backend.Dockerfile   # ← ИЗМЕНЕНО
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/mindkeeper-backend:latest
@@ -63,7 +63,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          file: ./frontend/Dockerfile
+          file: ./deploy/frontend.Dockerfile   # ← ИЗМЕНЕНО
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/mindkeeper-frontend:latest
