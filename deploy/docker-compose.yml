@@ -1,28 +1,16 @@
 services:
   backend:
-    build:
-      context: ../backend
-      dockerfile: ../deploy/backend.Dockerfile
-    container_name: mindkeeper-backend
-    ports:
-      - "4000:4000"
-    env_file:
-      - ../backend/.env
+    build: ../backend
+    environment:
+      - PORT=4000
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: ../deploy/frontend.Dockerfile
-    container_name: mindkeeper-frontend
-    ports:
-      - "5173:5173"
-    env_file:
-      - ../frontend/.env
+    build: ../frontend
     depends_on:
       - backend
     restart: unless-stopped
-    
+
   nginx:
     image: nginx:1.27-alpine
     ports:
@@ -35,5 +23,3 @@ services:
       - frontend
       - backend
     restart: unless-stopped
-
-    

@@ -19,7 +19,6 @@ const authenticate = async (req, res, next) => {
   if (error || !user) return res.status(401).json({ error: 'Неверный токен' });
 
   req.user = user;
-  // 👇 клиент с токеном пользователя — RLS теперь видит auth.uid()
   req.supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -60,6 +59,31 @@ app.get('/api/notes', authenticate, async (req, res) => {
   }
 });
 
+app.get('/api/notes/:id', authenticate, async (req, res) => {
+  try {
+    const { data, error } = await req.supabase
+      .from('notes')
+      .select(`
+        id, content, source_type, source_title, source_author, created_at, updated_at,
+        collections (id, name),
+        note_tags ( tags (id, name) )
+      `)
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .single();
+    if (error) throw error;
+
+    const note = {
+      ...data,
+      collection_name: data.collections?.name ?? null,
+      tags: (data.note_tags || []).map(nt => nt.tags).filter(Boolean),
+    };
+    res.json(note);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/notes', authenticate, async (req, res) => {
   const { content, source_type, source_title, source_author, collection_id, tags } = req.body;
   if (!content || !source_type) {
@@ -89,6 +113,52 @@ app.post('/api/notes', authenticate, async (req, res) => {
   }
 });
 
+app.put('/api/notes/:id', authenticate, async (req, res) => {
+  const { content, source_type, source_title, source_author, collection_id, tags } = req.body;
+  try {
+    const { data, error } = await req.supabase
+      .from('notes')
+      .update({
+        content, source_type, source_title, source_author,
+        collection_id: collection_id || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .select()
+      .single();
+    if (error) throw error;
+
+    if (Array.isArray(tags)) {
+      await req.supabase.from('note_tags').delete().eq('note_id', req.params.id);
+      for (const tagName of tags) {
+        const { data: tag } = await req.supabase
+          .from('tags')
+          .upsert({ user_id: req.user.id, name: tagName }, { onConflict: 'user_id,name' })
+          .select('id').single();
+        if (tag) {
+          await req.supabase.from('note_tags').insert({ note_id: req.params.id, tag_id: tag.id });
+        }
+      }
+    }
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/notes/:id', authenticate, async (req, res) => {
+  try {
+    const { error } = await req.supabase
+      .from('notes').delete()
+      .eq('id', req.params.id).eq('user_id', req.user.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/collections', authenticate, async (req, res) => {
   try {
     const { data, error } = await req.supabase
@@ -96,6 +166,39 @@ app.get('/api/collections', authenticate, async (req, res) => {
       .eq('user_id', req.user.id).order('name');
     if (error) throw error;
     res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/collections/:id', authenticate, async (req, res) => {
+  try {
+    const { data: collection, error: colErr } = await req.supabase
+      .from('collections')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id)
+      .single();
+    if (colErr) throw colErr;
+
+    const { data: notes, error: notesErr } = await req.supabase
+      .from('notes')
+      .select(`
+        id, content, source_type, source_title, source_author, created_at,
+        note_tags ( tags (id, name) )
+      `)
+      .eq('collection_id', req.params.id)
+      .eq('user_id', req.user.id)
+      .order('created_at', { ascending: false });
+    if (notesErr) throw notesErr;
+
+    res.json({
+      ...collection,
+      notes: (notes || []).map(n => ({
+        ...n,
+        tags: (n.note_tags || []).map(nt => nt.tags).filter(Boolean),
+      })),
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -115,13 +218,71 @@ app.post('/api/collections', authenticate, async (req, res) => {
   }
 });
 
-app.delete('/api/notes/:id', authenticate, async (req, res) => {
+app.delete('/api/collections/:id', authenticate, async (req, res) => {
   try {
     const { error } = await req.supabase
-      .from('notes').delete()
-      .eq('id', req.params.id).eq('user_id', req.user.id);
+      .from('collections')
+      .delete()
+      .eq('id', req.params.id)
+      .eq('user_id', req.user.id);
     if (error) throw error;
     res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/tags', authenticate, async (req, res) => {
+  try {
+    const { data, error } = await req.supabase
+      .from('tags')
+      .select('id, name, note_tags (note_id)')
+      .eq('user_id', req.user.id)
+      .order('name');
+    if (error) throw error;
+
+    const tags = (data || []).map(t => ({
+      id: t.id,
+      name: t.name,
+      count: (t.note_tags || []).length,
+    }));
+    res.json(tags);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/tags/:id/notes', authenticate, async (req, res) => {
+  try {
+    const { data, error } = await req.supabase
+      .from('notes')
+      .select(`
+        id, content, source_type, source_title, source_author, created_at,
+        collections (name),
+        note_tags ( tags (id, name) )
+      `)
+      .eq('user_id', req.user.id)
+      .eq('note_tags.tag_id', req.params.id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    const notes = (data || []).map(n => ({
+      ...n,
+      collection_name: n.collections?.name ?? null,
+      tags: (n.note_tags || []).map(nt => nt.tags).filter(Boolean),
+    }));
+    res.json(notes);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/profile', authenticate, async (req, res) => {
+  const { email } = req.body;
+  try {
+    const { data, error } = await req.supabase.auth.updateUser({ email });
+    if (error) throw error;
+    res.json(data.user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

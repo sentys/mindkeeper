@@ -1,46 +1,30 @@
+import { Link } from 'react-router-dom';
+
 export default function NoteCard({ note, onDelete }) {
-  const sourceLabels = {
-    book: '📖',
-    article: '📰',
-    video: '🎬',
-    other: '💭',
-  };
-
   return (
-    <article style={styles.card}> {}
+    <div style={styles.card}>
       <div style={styles.header}>
-        <span style={styles.sourceIcon}>
-          {sourceLabels[note.source_type] || '💭'}
-        </span>
-        <div style={styles.sourceInfo}>
-          {/* Заменил div на h3 */}
-          {note.source_title && <h3 style={styles.sourceTitle}>{note.source_title}</h3>}
-          {note.source_author && <div style={styles.author}>{note.source_author}</div>}
-        </div>
-        <button onClick={() => onDelete(note.id)} style={styles.deleteBtn} title="Удалить">
-          🗑
-        </button>
-      </div>
-
-      <div style={styles.content}>{note.content}</div>
-
-      <div style={styles.footer}>
+        <span style={styles.badge}>{note.source_type}</span>
         {note.collection_name && (
-          <span style={styles.collection}>📁 {note.collection_name}</span>
+          <Link to={`/collections/${note.collection_id}`} style={styles.collectionLink}>
+            {note.collection_name}
+          </Link>
         )}
-        {note.tags?.map(tag => (
-          <span key={tag.id} style={styles.tag}>#{tag.name}</span>
+      </div>
+      <Link to={`/notes/${note.id}`} style={styles.contentLink}>
+        <div style={styles.content}>{note.content}</div>
+      </Link>
+      <div style={styles.source}>
+        {note.source_title && <div>{note.source_title}</div>}
+        {note.source_author && <div style={styles.author}>{note.source_author}</div>}
+      </div>
+      <div style={styles.tags}>
+        {(note.tags || []).map(t => (
+          <Link key={t.id} to={`/tags/${t.id}`} style={styles.tag}>{t.name}</Link>
         ))}
       </div>
-
-      <div style={styles.date}>
-        {new Date(note.created_at).toLocaleDateString('ru-RU', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })}
-      </div>
-    </article>
+      <button onClick={() => onDelete(note.id)} style={styles.deleteBtn}>🗑 Удалить</button>
+    </div>
   );
 }
 
@@ -53,62 +37,69 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: 12,
-    transition: 'transform 0.15s, box-shadow 0.15s',
   },
   header: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  sourceIcon: {
-    fontSize: 24,
-  },
-  sourceInfo: {
-    flex: 1,
-  },
-  sourceTitle: {
-    fontWeight: 600,
-    fontSize: 14,
-    margin: 0, // 
-  },
-  author: {
+  badge: {
+    padding: '4px 10px',
+    borderRadius: 12,
+    background: '#e0e7ff',
+    color: '#06519c',
     fontSize: 12,
-    color: '#86868b',
+    fontWeight: 600,
   },
-  deleteBtn: {
-    background: 'transparent',
-    color: '#86868b',
-    padding: 4,
-    fontSize: 16,
+  collectionLink: {
+    color: '#06519c',
+    textDecoration: 'none',
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  contentLink: {
+    textDecoration: 'none',
+    color: 'inherit',
   },
   content: {
-    fontSize: 15,
+    fontSize: 14,
     lineHeight: 1.6,
-    color: '#1d1d1f',
-    whiteSpace: 'pre-wrap',
+    color: '#1f2937',
+    maxHeight: 120,
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitLineClamp: 5,
+    WebkitBoxOrient: 'vertical',
   },
-  footer: {
+  source: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  author: {
+    fontStyle: 'italic',
+  },
+  tags: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: 6,
   },
-  collection: {
-    fontSize: 12,
-    background: '#f0f0f5',
-    padding: '3px 10px',
-    borderRadius: 12,
-    color: '#515154',
-  },
   tag: {
-    fontSize: 12,
-    background: '#e8f2ff',
-    color: '#0071e3',
     padding: '3px 10px',
     borderRadius: 12,
-  },
-  date: {
+    background: '#f3f4f6',
+    color: '#06519c',
+    textDecoration: 'none',
     fontSize: 11,
-    color: '#86868b',
-    marginTop: 4,
+  },
+  deleteBtn: {
+    padding: '6px 12px',
+    borderRadius: 8,
+    border: '1px solid #fca5a5',
+    background: '#fff',
+    color: '#dc2626',
+    cursor: 'pointer',
+    fontSize: 12,
+    alignSelf: 'flex-end',
   },
 };
